@@ -1,0 +1,20 @@
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    width: 320px;
+    margin: 0 auto;
+}
+
+.text {
+
+}
+
+.file {
+
+}
+
+.submit {
+    
+}
+
