@@ -58,7 +58,7 @@ export const handleUpload = (req, res) => {
         })
     });
 
-    bb.on('close', async () => {
+    bb.on('close', async () => {        
         let fileName = uploadData.file.name;
         let s3Path =
             uploadData.directory.length > 0
@@ -70,19 +70,31 @@ export const handleUpload = (req, res) => {
             Bucket: process.env.AWS_S3_BUCKET_NAME,
             Key: s3Path,
             ContentType: uploadData.file.mimeType,
+            Metadata: {
+                originalName: uploadData.file.name, 
+            }
         });
 
-        await s3Client.send(putCommand);
-
-        const publicUrl = getS3PublicObjectUrl(s3Path);
-
-        res.writeHead(200);
-        res.end(
-            JSON.stringify({
-                url: publicUrl,
-            })
-        );
-        return;
+        try {
+            await s3Client.send(putCommand);
+    
+            const publicUrl = getS3PublicObjectUrl(s3Path);
+    
+            res.writeHead(200);
+            res.end(
+                JSON.stringify({
+                    url: publicUrl,
+                })
+            );
+            return;
+        } catch (error) {
+            res.writeHead(500);
+            res.end(
+                {
+                    message: "Error happened while uploading a file"
+                }
+            );
+        }
     });
 
     req.pipe(bb);

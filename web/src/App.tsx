@@ -28,7 +28,22 @@ function App() {
 		console.log('UPLOAD RESULT', data);
 	};
 
+	const handleList = async () => {
+		const response = await fetch('http://localhost:3000?c=3');
+		const data = await response.json();
+
+		console.log('LISTED OBJECTS', data)
+	}
+
 	return (
+		<>
+		<div>
+			<button onClick={handleList}>
+				List
+			</button>
+		</div>
+
+
 		<form
 			onSubmit={handleSubmit}
 			className='form'
@@ -57,6 +72,7 @@ function App() {
 
 			<button className='submit'>Submit</button>
 		</form>
+		</>
 	);
 }
 

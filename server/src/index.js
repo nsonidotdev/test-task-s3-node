@@ -1,8 +1,9 @@
 import 'dotenv/config';
 import { S3Client } from '@aws-sdk/client-s3';
 import http from 'http';
+import url from 'url';
 import { formatEnpointName } from './utils.js';
-import { routes } from './router/index.js'
+import { routes } from './router/index.js';
 
 export const s3Client = new S3Client({
 	region: process.env.AWS_S3_REGION,
@@ -15,7 +16,7 @@ export const s3Client = new S3Client({
 const PORT = process.env.PORT ?? 3000;
 
 const server = http
-	.createServer((req, res) => {
+	.createServer(async (req, res) => {
 		res.setHeader('Access-Control-Allow-Origin', '*');
 		res.setHeader(
 			'Access-Control-Allow-Methods',
@@ -23,17 +24,19 @@ const server = http
 		);
 		res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-		const endpointName = formatEnpointName(req.method, req.url);
-		const handler = routes[endpointName];
-		console.log(handler)
+		const { pathname } = url.parse(req.url);
 
-		if (handler) {
-			handler(req, res);
-		} else {
+		const endpointName = formatEnpointName(req.method, pathname);
+		const handler = routes[endpointName];
+
+		if (!handler) {
 			res.writeHead(404);
 			res.end(JSON.stringify({ message: 'Endpoint not found' }));
+			return;
 		}
+
+		await handler(req, res);
 	})
 	.listen(PORT, () => {
-		console.log(`Server running on port ${PORT}`)
+		console.log(`Server running on port ${PORT}`);
 	});
