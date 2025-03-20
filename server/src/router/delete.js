@@ -1,7 +1,7 @@
 import { DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { s3Client } from '../index.js';
 
-export const handleDeleteObject = async (req, res) => {
+export const handleDelete = async (req, res) => {
 	const key = decodeURIComponent(req.params.key);
     
 	try {
