@@ -13,14 +13,14 @@ const Upload = () => {
 			return;
 		}
 
-		const formData = new FormData();
-
-		formData.append('attachment', file);
-		formData.append('directory', directory);
-
-		const response = await fetch('http://localhost:3000/upload', {
+		const queryString = new URLSearchParams({ dir: directory }).toString();
+		const response = await fetch(`http://localhost:3000/upload?${queryString}`, {
 			method: 'POST',
-			body: formData,
+			body: file,
+			headers: {
+				"Content-Type": file.type,
+				"X-File-Name": file.name
+			}
 		});
 
 		const data = await response.json();

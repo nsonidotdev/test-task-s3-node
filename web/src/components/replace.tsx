@@ -10,10 +10,10 @@ const Replace = () => {
 			return alert('Select file please');
 		}
 
-		const response = await fetch(`http://localhost:3000?key=${key}`, {
+		const response = await fetch(`http://localhost:3000/${encodeURIComponent(key)}`, {
 			method: 'PUT',
 			headers: {
-				'Content-Type': file.type, // Set correct content type
+				'Content-Type': file.type, 
 			},
 			body: file, 
 		});

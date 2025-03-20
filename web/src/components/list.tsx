@@ -18,11 +18,12 @@ const List = () => {
 			alert('Invalid number using default 5');
 		}
 		const count = isInputValid ? Number(countStr.trim()) : 5;
+		const queryString = new URLSearchParams({ c: Math.max(count, 1).toString() }).toString();
 
-		const response = await fetch(`http://localhost:3000?c=${Math.max(count, 1)}`);
+		const response = await fetch(`http://localhost:3000?${queryString}`);
 		const data = await response.json();
 
-		setItems(data);
+		setItems(data.objects);
 	};
 
 	return (
