@@ -1,101 +1,50 @@
-import busboy from 'busboy';
 import { PutObjectCommand } from '@aws-sdk/client-s3';
-import { getS3PublicObjectUrl } from '../utils.js';
-import { allowedMimes, fileSizeLimit } from '../constants.js';
-import { s3Client } from '../index.js'
-
+import { getS3PublicObjectUrl, validateFile } from '../utils.js';
+import { s3Client } from '../index.js';
 
 export const handleUpload = (req, res) => {
-    const bb = busboy({
-        headers: req.headers,
-        limits: { fileSize: fileSizeLimit },
-    });
+	const directory = decodeURIComponent(req.query.dir);
+	const fileType = req.headers['content-type'];
+	const filename = req.headers['x-file-name'];
 
-    let uploadData = {
-        directory: '',
-        file: {
-            name: '',
-            mimeType: '',
-            buffer: null,
-        },
-    };
+	console.log('filetype', fileType, filename, directory);
 
-    bb.on('field', (key, value) => {
-        if (key === 'directory') {
-            uploadData.directory = value.trim();
-        }
-    });
+	const chunks = [];
+	req.on('data', (chunk) => chunks.push(chunk));
+	req.on('end', async () => {
+		const fileBuffer = Buffer.concat(chunks);
+		const validationResult = validateFile(fileBuffer, fileType);
 
-    bb.on('file', async (formKey, file, info) => {
-        if (formKey !== 'attachment') {
-            res.writeHead(400);
-            res.end(JSON.stringify({ message: 'No attachment field found' }));
-            return;
-        }
+		if (!validationResult.valid) {
+			res.writeHead(validationResult.code);
+			res.end(JSON.stringify({ message: validationResult.message }));
+			return;
+		}
 
-        if (!allowedMimes.includes(info.mimeType)) {
-            res.writeHead(400);
-            res.end(
-                JSON.stringify({ message: 'This file type is not supported' })
-            );
-            return;
-        }
+		let S3Key = directory.length > 0 ? `${directory}/${filename}` : filename;
 
-        let chunks = [];
+		const putCommand = new PutObjectCommand({
+			Bucket: process.env.AWS_S3_BUCKET_NAME,
+			Key: S3Key,
+			Body: fileBuffer,
+			ContentType: fileType,
+		});
 
-        file.on('data', (chunk) => {
-            chunks.push(chunk);
-        });
+		try {
+			await s3Client.send(putCommand);
+			const publicUrl = getS3PublicObjectUrl(S3Key);
 
-        file.on("end", () => {
-            const fileBuffer = Buffer.concat(chunks);
-
-            uploadData.file = {
-                buffer: fileBuffer,
-                mimeType: info.mimeType,
-                name: info.filename,
-            };
-        })
-    });
-
-    bb.on('close', async () => {        
-        let fileName = uploadData.file.name;
-        let s3Path =
-            uploadData.directory.length > 0
-                ? `${uploadData.directory}/${fileName}`
-                : fileName;
-
-        const putCommand = new PutObjectCommand({
-            Body: uploadData.file.buffer,
-            Bucket: process.env.AWS_S3_BUCKET_NAME,
-            Key: s3Path,
-            ContentType: uploadData.file.mimeType,
-            Metadata: {
-                originalName: uploadData.file.name, 
-            }
-        });
-
-        try {
-            await s3Client.send(putCommand);
-    
-            const publicUrl = getS3PublicObjectUrl(s3Path);
-    
-            res.writeHead(200);
-            res.end(
-                JSON.stringify({
-                    url: publicUrl,
-                })
-            );
-            return;
-        } catch (error) {
-            res.writeHead(500);
-            res.end(
-                {
-                    message: "Error happened while uploading a file"
-                }
-            );
-        }
-    });
-
-    req.pipe(bb);
-}
+			res.writeHead(200);
+			res.end(
+				JSON.stringify({
+					url: publicUrl,
+				})
+			);
+		} catch (error) {
+			res.writeHead(500);
+			res.end({
+				message: 'Error happened while uploading a file',
+			});
+		}
+	});
+};

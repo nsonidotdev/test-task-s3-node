@@ -1,7 +1,30 @@
 import urlMod from 'url';
+import { allowedMimes, fileSizeLimit } from './constants.js';
 
 export const getS3PublicObjectUrl = (key) => {
 	return `https://${process.env.AWS_S3_BUCKET_NAME}.s3.${process.env.AWS_S3_REGION}.amazonaws.com/${key}`;
+};
+
+export const validateFile = (file, fileType) => {
+	if (file.length > fileSizeLimit) {
+		return {
+			valid: false,
+			message: 'File too large',
+			code: 413
+		};
+	}
+
+	if (!allowedMimes.includes(fileType)) {
+		return {
+			valid: false,
+			message: `This file type is not supported`,
+			code: 400
+		};
+	}
+
+	return {
+		valid: true,
+	};
 };
 
 export const matchEndpointName = (routes, method, url) => {
