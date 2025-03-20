@@ -3,6 +3,9 @@ You should have following tools installed
 - `Node.js`
 - `pnpm`
 
+### How to use and test
+Launch the server in `./web` directory and use website opened on `http://localhost:5173/` to test endpoints
+
 ### Setup Web
 To start web application for testing navigate to the `./web` and run follwoing commands.
 

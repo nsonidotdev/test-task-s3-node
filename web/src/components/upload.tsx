@@ -14,7 +14,7 @@ const Upload = () => {
 		}
 
 		const queryString = new URLSearchParams({ dir: directory }).toString();
-		const response = await fetch(`http://localhost:3000/upload?${queryString}`, {
+		const response = await fetch(`http://localhost:3000?${queryString}`, {
 			method: 'POST',
 			body: file,
 			headers: {
