@@ -29,7 +29,9 @@ function App() {
 	};
 
 	const handleList = async () => {
-		const response = await fetch('http://localhost:3000?c=3');
+		// const response = await fetch('http://localhost:3000/key123', { method: 'DELETE' });
+		const response = await fetch('http://localhost:3000?c=5');
+
 		const data = await response.json();
 
 		console.log('LISTED OBJECTS', data)
